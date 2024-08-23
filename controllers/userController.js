@@ -76,8 +76,49 @@ const logoutUser = async (req, res) => {
     res.status(200).json({ message: "User logged out successfully." });
   } catch (err) {
     res.status(500).json({ message: err.message });
-    console.log("Error in loginUser", err.message);
+    console.log("Error in logoutUser", err.message);
   }
 };
 
-export { singupUser, loginUser, logoutUser };
+const followUnfollowUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const userToModify = await User.findById(id);
+
+    const currentUser = await User.findById(req.user._id);
+
+    if (id === req.user._id)
+      return res
+        .status(400)
+        .json({ message: "You cannot follow/unfollow yourself" });
+
+    if (!userToModify || !currentUser)
+      return res.status(400).json({ message: "User not found" });
+
+    const isFollowing = currentUser.following.includes(id);
+
+    if (isFollowing) {
+      // unfollow user
+      // 현재 유저(currentUser)의 following에서 userToModify의 아이디 제거하기
+      await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
+      // userToModify의 followers에서 현재 유저(currentUser)의 아이디 제거하기
+      await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
+
+      return res.status(200).json({ message: "User unfollowed successfully." });
+    } else {
+      // follow user
+      // 현재 유저(currentUser)의 following에서 userToModify의 아이디 추가하기
+      await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
+      // userToModify의 followers에서 현재 유저(currentUser)의 아이디 추가하기
+      await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
+
+      return res.status(200).json({ message: "User followed successfully." });
+    }
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+    console.log("Error in followUnfollowUsr", err.message);
+  }
+};
+
+export { singupUser, loginUser, logoutUser, followUnfollowUser };
