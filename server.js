@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import userRoutes from "./routes/userRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
 import cors from "cors";
+import { v2 as cloudinary } from "cloudinary";
 
 dotenv.config();
 
@@ -13,8 +14,14 @@ const app = express();
 
 const PORT = process.env.PORT || 5000;
 
-app.use(express.json()); // allow to parse JSON data in the request body
-app.use(express.urlencoded({ extended: true })); // to parse form data in teh request body
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+app.use(express.json({ limit: "10mb" })); // allow to parse JSON data in the request body
+app.use(express.urlencoded({ limit: "10mb", extended: true })); // to parse form data in teh request body
 app.use(cookieParser());
 app.use(
   cors({
