@@ -54,7 +54,7 @@ async function getMessages(req, res) {
     });
 
     if (!conversation) {
-      return res.statut(404).json({ error: "Conversation not found" });
+      return res.status(404).json({ error: "Conversation not found" });
     }
 
     const messages = await Message.find({
@@ -75,6 +75,13 @@ async function getConversations(req, res) {
     }).populate({
       path: "participants",
       select: "username profilePic",
+    });
+
+    // remove the currentUser from the participant array
+    conversations.forEach((conversation) => {
+      conversation.participants = conversation.participants.filter(
+        (participant) => participant._id.toString() !== userId.toString()
+      );
     });
 
     res.status(200).json(conversations);
