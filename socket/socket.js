@@ -5,6 +5,8 @@ import { Server } from "socket.io";
 import http from "http";
 // `express`는 Node.js의 웹 애플리케이션 프레임워크로, 서버를 간편하게 설정할 수 있게 도와줍니다.
 import express from "express";
+import Message from "../models/messageModel.js";
+import Conversation from "../models/conversationModel.js";
 
 // `express` 인스턴스를 생성합니다. 이 인스턴스를 통해 라우팅 및 미들웨어 설정을 할 수 있습니다.
 const app = express();
@@ -41,6 +43,23 @@ io.on("connection", (socket) => {
   }
 
   io.emit("getOnlineUsers", Object.keys(userSocketMap)); // [1, 2, 3, 4, 5]
+
+  socket.on("markMessagesAsSeen", async ({ conversationId, userId }) => {
+    try {
+      await Message.updateMany(
+        { conversationId: conversationId, seen: false },
+        { $set: { seen: true } }
+      );
+
+      await Conversation.updateOne(
+        { _id: conversationId },
+        { $set: { "lastMessage.seen": true } }
+      );
+      io.to(userSocketMap[userId]).emit("messagesSeen", { conversationId });
+    } catch (error) {
+      console.log(error);
+    }
+  });
 
   socket.on("disconnect", () => {
     console.log("User disconnected", socket.id);
