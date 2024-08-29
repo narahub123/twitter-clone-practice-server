@@ -226,6 +226,50 @@ const updateUser = async (req, res) => {
   }
 };
 
+const getSuggestedUsers = async (req, res) => {
+  console.log("hi");
+
+  try {
+    const userId = req.user._id;
+    // exclude the current user from the suggested user array
+    // exclude the current following
+
+    console.log("유저 아이디", userId);
+    // find currently follwing users
+    const usersFollwedByYou = await User.findById(userId).select("following");
+
+    // fetch random 10 users
+    const users = await User.aggregate([
+      {
+        $match: {
+          _id: { $ne: userId },
+        },
+      },
+      {
+        $sample: { size: 10 },
+      },
+    ]);
+
+    // filter currently followig users
+    const filteredUsers = users.filter(
+      (user) => !usersFollwedByYou.following.includes(user._id)
+    );
+
+    // take 4 users from the filteredUsers
+    const suggestdUsers = filteredUsers.slice(0, 4);
+
+    // take out password from the return data
+    suggestdUsers.forEach((user) => (user.password = null));
+
+    console.log(suggestdUsers);
+
+    return res.status(200).json(suggestdUsers);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+    console.log("Error in getSuggested", err.message);
+  }
+};
+
 export {
   singupUser,
   loginUser,
@@ -233,4 +277,5 @@ export {
   followUnfollowUser,
   updateUser,
   getUserProfile,
+  getSuggestedUsers,
 };
