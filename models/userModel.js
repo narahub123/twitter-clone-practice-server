@@ -37,6 +37,11 @@ const userSchema = mongoose.Schema(
       type: String,
       default: "",
     },
+
+    isFroze: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     // createdAt과 updatedAt 필드를 자동으로 추가
